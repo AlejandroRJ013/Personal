@@ -1,0 +1,22 @@
+h1 {
+    text-align: center;
+    margin: 20px 0 20px 0;
+}
+
+img {
+    height: 200px;
+    background-color: rgb(158, 149, 149); 
+    padding: 10px;
+    border-radius: 95px 95px 10px 75px;
+    /* border-radius: 0 200px 200px 0; */
+}
+
+p {
+    color:red
+}
+
+button {
+    padding: 50px 30px 50px 30px;
+    border-radius: 50px 20px 50px 20px;
+    background-color:rgb(56, 142, 234);
+}
