@@ -278,11 +278,11 @@ public class mainPrueba {
         Color color2 = new Color(Color.DARK_GRAY.getRed()+50, Color.DARK_GRAY.getGreen()+50, Color.DARK_GRAY.getBlue()+50);
         Color color3 = new Color(Color.DARK_GRAY.getRed()+100, Color.DARK_GRAY.getGreen()+100, Color.DARK_GRAY.getBlue()+100);
 
-        JDialog dialogo = new JDialog(frame, "Pago con NFC", true);
-        dialogo = parametrosDialog(dialogo, color1, color2, color3);
+        JDialog dialogo = new JDialog(frame, "Eliminar artículos", true);
+        dialogo = parametrosDialog(dialogo, productos, color1, color2, color3, frame, productosTXT);
     }
 
-    public static JDialog parametrosDialog(JDialog dialogo, Color color1, Color color2, Color color3) {
+    public static JDialog parametrosDialog(JDialog dialogo, JPanel productos, Color color1, Color color2, Color color3, JFrame frame, StringBuilder productosTXT) {
         dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         JPanel panelArticulos = new JPanel();
@@ -292,7 +292,7 @@ public class mainPrueba {
         GridBagConstraints posicion = new GridBagConstraints();
         posicion.fill = GridBagConstraints.BOTH;
 
-        panelArticulos = parametrosPanelArticulos(panelArticulos, posicion, color1, color2, color3);
+        panelArticulos = parametrosPanelArticulos(panelArticulos, productos, posicion, color1, color2, color3, frame, productosTXT);
 
         dialogo.add(panelArticulos);
 
@@ -303,19 +303,25 @@ public class mainPrueba {
         return dialogo;
     }
 
-    public static JPanel parametrosPanelArticulos(JPanel panelArticulos, GridBagConstraints posicion, Color color1, Color color2, Color color3) {
+    public static JPanel parametrosPanelArticulos(JPanel panelArticulos, JPanel productos, GridBagConstraints posicion, Color color1, Color color2, Color color3, JFrame frame, StringBuilder productosTXT) {
         String texto = "Nombre del artículo, Cantidad en stock";
         JLabel ejemploTexto = parametrosLabel(texto, color1);
  
-        String textoCheck1 = "Eliminar";
-        String textoCheck2 = "X cantidad";
+        String textoCheck = "X cantidad";
         JPanel check1 = new JPanel();
-        check1 = parametrosPanelCheck(check1, color1, textoCheck1, textoCheck2);
+        check1 = parametrosPanelCheck(check1, color1, textoCheck);
 
-        String CheckTodos1 = "Eliminar todo";
-        String CheckTodos2 = "el artículo";
+        String CheckTodos = "Eliminar artículo";
         JPanel check2 = new JPanel();
-        check2 = parametrosPanelCheck(check2, color1, CheckTodos1, CheckTodos2);
+        check2 = parametrosPanelCheck(check2, color1, CheckTodos);
+
+        JLabel eliminarTxt = new JLabel("Eliminar");
+        JPanel eliminarPanel = new JPanel();
+        eliminarPanel.setLayout(new BoxLayout(eliminarPanel, BoxLayout.Y_AXIS));
+        eliminarPanel.setBackground(color1);
+        eliminarPanel.add(eliminarTxt);
+        eliminarPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
+        eliminarPanel.setOpaque(true); 
 
         posicion.insets = new Insets(4, 4, 4, 2); // Añadir un espacio entre componentes de un GridBagLayout
 
@@ -329,20 +335,26 @@ public class mainPrueba {
         posicion.gridx = 2;
         panelArticulos.add(check2, posicion);
 
+        int indices[] = new int[1];
+
         for (int i = 0; i < StockArticulosPrueba.inventario.size(); i++) {
             int posicionVertical = i + 1;
+            indices[0] = i;
 
+            JPanel panelTxt = new JPanel();
+            panelTxt.setLayout(new BoxLayout(panelTxt, BoxLayout.Y_AXIS));
+            panelTxt.setBackground(color2);
+            panelTxt.setAlignmentX(Component.LEFT_ALIGNMENT);
             String nombre = StockArticulosPrueba.inventario.get(i).getNombre();
             int cantidad = StockArticulosPrueba.inventario.get(i).getCantidad();
             String articulo_cantidad = nombre + ", con " + cantidad + " en el almacen";
             JLabel textoArticulos = parametrosLabel(articulo_cantidad, color2);
+            panelTxt.add(textoArticulos);
 
             JPanel checkXSuprimir = new JPanel();
             checkXSuprimir.setBackground(color3);
-            JCheckBox eliminarX = new JCheckBox();
-            eliminarX.setBackground(color3);
-            eliminarX.setHorizontalAlignment(SwingConstants.CENTER);
-            checkXSuprimir.add(eliminarX);
+            JTextField cantidadTxt = new JTextField(10);
+            checkXSuprimir.add(cantidadTxt);
 
             JPanel checkTodosSuprimir = new JPanel();
             checkTodosSuprimir.setBackground(color3);
@@ -351,32 +363,134 @@ public class mainPrueba {
             eliminarArticulo.setHorizontalAlignment(SwingConstants.CENTER);
             checkTodosSuprimir.add(eliminarArticulo);
 
+            JButton suprimir = new JButton("Eliminar");
+            suprimir.setBackground(color2);
+            suprimir.setForeground(Color.BLACK);
+            suprimir.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int indice = StockArticulosPrueba.indiceProducto(nombre);
+                    if (eliminarArticulo.isSelected()) {
+                        StockArticulosPrueba.inventario.remove(indice);
+                        cantidadTxt.setText("");
+                        eliminarArticulo.setSelected(false);
+                        actualizarProductos(frame, productos, productosTXT);
+                        repintarPanelBorrar(indices, panelArticulos, productos, posicion, color1, color2, color3, frame, productosTXT);
+                    } else if (!eliminarArticulo.isSelected() && !cantidadTxt.getText().isEmpty()) {
+                        String can = cantidadTxt.getText();
+                        int cantidadInsertada = Integer.parseInt(can);
+                        int cantidad = StockArticulosPrueba.inventario.get(indice).getCantidad();
+                        cantidadTxt.setText("");
+                        eliminarArticulo.setSelected(false);
+                        if (cantidadInsertada < cantidad) {
+                            StockArticulosPrueba.inventario.get(indice).setCantidad(cantidad - cantidadInsertada);
+                            actualizarProductos(frame, productos, productosTXT);
+                            repintarPanelBorrar(indices, panelArticulos, productos, posicion, color1, color2, color3, frame, productosTXT);
+                        }
+                    }
+                }
+            });
+
             posicion.insets = new Insets(0, 4, 3, 2);
 
             posicion.gridy = posicionVertical;
             posicion.gridx = 0;
-            panelArticulos.add(textoArticulos, posicion);
+            panelArticulos.add(panelTxt, posicion);
             posicion.insets = new Insets(0, 1, 3, 1);
             posicion.gridx = 1;
             panelArticulos.add(checkXSuprimir, posicion);
-            posicion.insets = new Insets(0, 1, 3, 4);
+            posicion.insets = new Insets(0, 1, 3, 1);
             posicion.gridx = 2;
             panelArticulos.add(checkTodosSuprimir, posicion);
+            posicion.insets = new Insets(0, 1, 3, 4);
+            posicion.gridx = 3;
+            panelArticulos.add(suprimir, posicion);
         }
+
         return panelArticulos;
     }
 
-    public static JPanel parametrosPanelCheck(JPanel check, Color color, String texto1, String texto2) {
+    public static void repintarPanelBorrar(int indices[], JPanel panelArticulos, JPanel productos, GridBagConstraints posicion, Color color1, Color color2, Color color3, JFrame frame, StringBuilder productosTXT) {
+        panelArticulos.setVisible(false);
+        panelArticulos.removeAll();
+        
+        for (int i = 0; i < StockArticulosPrueba.inventario.size(); i++) {
+            int posicionVertical = i + 1;
+            indices[0] = i;
+
+            JPanel panelTxt = new JPanel();
+            panelTxt.setLayout(new BoxLayout(panelTxt, BoxLayout.Y_AXIS));
+            panelTxt.setBackground(color2);
+            panelTxt.setAlignmentX(Component.LEFT_ALIGNMENT);
+            String nombre = StockArticulosPrueba.inventario.get(i).getNombre();
+            int cantidad = StockArticulosPrueba.inventario.get(i).getCantidad();
+            String articulo_cantidad = nombre + ", con " + cantidad + " en el almacen";
+            JLabel textoArticulos = parametrosLabel(articulo_cantidad, color2);
+            panelTxt.add(textoArticulos);
+
+            JPanel checkXSuprimir = new JPanel();
+            checkXSuprimir.setBackground(color3);
+            JTextField cantidadTxt = new JTextField(10);
+            checkXSuprimir.add(cantidadTxt);
+
+            JPanel checkTodosSuprimir = new JPanel();
+            checkTodosSuprimir.setBackground(color3);
+            JCheckBox eliminarArticulo = new JCheckBox();
+            eliminarArticulo.setBackground(color3);
+            eliminarArticulo.setHorizontalAlignment(SwingConstants.CENTER);
+            checkTodosSuprimir.add(eliminarArticulo);
+
+            JButton suprimir = new JButton("Eliminar");
+            suprimir.setBackground(color2);
+            suprimir.setForeground(Color.BLACK);
+            suprimir.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int indice = StockArticulosPrueba.indiceProducto(nombre);
+                    if (eliminarArticulo.isSelected()) {
+                        StockArticulosPrueba.inventario.remove(indice);
+                        actualizarProductos(frame, productos, productosTXT);
+                    } else if (!eliminarArticulo.isSelected() && !cantidadTxt.getText().isEmpty()) {
+                        String can = cantidadTxt.getText();
+                        int cantidadInsertada = Integer.parseInt(can);
+                        int cantidad = StockArticulosPrueba.inventario.get(indice).getCantidad();
+                        if (cantidadInsertada < cantidad) {
+                            StockArticulosPrueba.inventario.get(indice).setCantidad(cantidad - cantidadInsertada);
+                            actualizarProductos(frame, productos, productosTXT);
+                        }
+                    }
+                }
+            });
+
+            posicion.insets = new Insets(0, 4, 3, 2);
+
+            posicion.gridy = posicionVertical;
+            posicion.gridx = 0;
+            panelArticulos.add(panelTxt, posicion);
+            posicion.insets = new Insets(0, 1, 3, 1);
+            posicion.gridx = 1;
+            panelArticulos.add(checkXSuprimir, posicion);
+            posicion.insets = new Insets(0, 1, 3, 1);
+            posicion.gridx = 2;
+            panelArticulos.add(checkTodosSuprimir, posicion);
+            posicion.insets = new Insets(0, 1, 3, 4);
+            posicion.gridx = 3;
+            panelArticulos.add(suprimir, posicion);
+
+            panelArticulos.revalidate();
+            panelArticulos.repaint();
+            panelArticulos.setVisible(true);
+        }
+    }
+
+    public static JPanel parametrosPanelCheck(JPanel check, Color color, String texto1) {
         check.setLayout(new GridLayout(2, 0));
         check.setBackground(color);
 
         JLabel check1 = parametrosLabel(texto1, color);
-        JLabel check2 = parametrosLabel(texto2, color);
         check1.setOpaque(false);
-        check2.setOpaque(false);
 
         check.add(check1);
-        check.add(check2);
         check.setBorder(new EmptyBorder(4, 4, 4, 4));
         check.setOpaque(true); 
 
@@ -720,7 +834,7 @@ public class mainPrueba {
                     productos.add(labelProductos);
                     productos.add(Box.createVerticalStrut(5));
                 } else {
-                    JOptionPane.showMessageDialog(null, "Has llegado al máximo de Articulos posible");
+                    JOptionPane.showMessageDialog(null, "Has llegado al máximo de artículos posible");
                 }
             }
             productos.revalidate();

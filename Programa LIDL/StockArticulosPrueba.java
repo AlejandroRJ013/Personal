@@ -372,4 +372,15 @@ public class StockArticulosPrueba {
             }
         }
     }
+
+    public static int indiceProducto(String nombre) {
+        int indice = 0;
+        for (int i = 0; i < inventario.size(); i++) {
+            if (nombre.equals(nombre)) {
+                indice = i;
+                break;
+            }
+        }
+        return indice;
+    }
 }
